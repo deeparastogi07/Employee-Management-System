@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useState } from "react"
-import { dummyEmployeeData, DEPARTMENTS } from "../assets/assets"
+import { DEPARTMENTS } from "../assets/assets"
 import { Plus, Search, X } from "lucide-react"
 import EmployeeCard from "../components/EmployeeCard"
 import EmployeeForm from "../components/EmployeeForm"
+import api from "../api/axios"
+import { useAuth } from "../context/AuthContext"
+import { Navigate } from "react-router-dom"
+import toast from "react-hot-toast"
 
 const Employees = () => {
     const [employees, setEmployees] = useState([])
@@ -12,17 +16,28 @@ const Employees = () => {
     const [editEmployee, setEditEmployee] = useState(null)
     const [showCreateModel, setShowCreateModel] = useState(false)
 
+    const { user } = useAuth()
+
     const fetchEmployees = useCallback(async () => {
         setLoading(true)
-        setEmployees(dummyEmployeeData.filter((emp) => (selectedDept ? emp.department === selectedDept : emp)))
-        setTimeout(() => {
+        try {
+            const { data } = await api.get("/employees", {
+                params: selectedDept ? { department: selectedDept } : undefined,
+            })
+            setEmployees(data)
+        } catch (error) {
+            toast.error(error.response?.data?.error || "Failed to load employees")
+            setEmployees([])
+        } finally {
             setLoading(false)
-        }, 1000)
+        }
     }, [selectedDept])
 
     useEffect(() => {
         fetchEmployees();
     },[fetchEmployees])
+
+    if (user?.role !== "ADMIN") return <Navigate to="/dashboard" replace />
 
     const filtered = employees.filter((emp) => `${emp.firstName} ${emp.lastName} ${emp.position}`.toLowerCase().includes(search.toLowerCase()))
 

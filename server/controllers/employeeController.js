@@ -15,7 +15,7 @@ export const getEmployees = async (req, res) => {
         const result = employees.map((emp)=> ({
             ...emp,
             id: emp._id.toString(),
-            user: emp.userId ? {email: emp.userId.email, role: emp.useId.role} : null
+            user: emp.userId ? {email: emp.userId.email, role: emp.userId.role} : null
         }))
         return res.json(result)
     } catch (error) {
@@ -41,7 +41,7 @@ export const createEmployee = async (req, res) => {
         })
 
         const employee = await Employee.create({
-            userId: user_.id,
+            userId: user._id,
             firstName,
             lastName,
             email,
@@ -49,8 +49,8 @@ export const createEmployee = async (req, res) => {
             position,
             department: department || "Engineering",
             basicSalary: Number(basicSalary) || 0,
-            allowances: Number(basicSalary) || 0,
-            deductions: Number(basicSalary) || 0,
+            allowances: Number(allowances) || 0,
+            deductions: Number(deductions) || 0,
             joinDate: new Date(joinDate),
             bio: bio || ""
         })
@@ -84,8 +84,8 @@ export const updateEmployee = async (req, res) => {
             position,
             department: department || "Engineering",
             basicSalary: Number(basicSalary) || 0,
-            allowances: Number(basicSalary) || 0,
-            deductions: Number(basicSalary) || 0,
+            allowances: Number(allowances) || 0,
+            deductions: Number(deductions) || 0,
             employmentStatus: employmentStatus || "ACTIVE",
             bio: bio || ""
         })

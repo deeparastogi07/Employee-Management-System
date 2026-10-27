@@ -40,10 +40,14 @@ export const createLeave = async (req, res) => {
             status: "PENDING"
         })
 
-        await inngest.send({
-            name: "leave/pending",
-            data: {LeaveApplicationId: leave._id}
-        })
+        try {
+            await inngest.send({
+                name: "leave/pending",
+                data: {LeaveApplicationId: leave._id}
+            })
+        } catch (error) {
+            console.error("Inngest leave event failed: ", error)
+        }
 
         return res.json({success: true, data: leave})
 
@@ -61,7 +65,7 @@ export const getLeaves = async (req, res) => {
         if(isAdmin) {
             const status = req.query.status
             const where = status ? {status} : {}
-            const leaves = (await LeaveApplication.find(where).populate("employeeId")).toSorted({createdAt: -1})
+            const leaves = await LeaveApplication.find(where).populate("employeeId").sort({createdAt: -1})
             const data = leaves.map((l)=> {
                 const obj = l.toObject()
                 return {

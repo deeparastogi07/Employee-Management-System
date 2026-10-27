@@ -25,7 +25,7 @@ export const login = async (req, res) => {
             return res.status(401).json({ error: "Not authorized as employee" });
         }
 
-        const isValid = await bcrypt.compare(password, userPassword)
+        const isValid = await bcrypt.compare(password, user.password)
         if (!isValid) {
             return res.status(401).json({ error: "Invalid credentials" });
         }

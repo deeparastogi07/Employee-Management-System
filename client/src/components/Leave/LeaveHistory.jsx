@@ -1,12 +1,23 @@
 import React, { useState } from "react"
 import { format } from "date-fns"
 import { Check, Loader2, X } from "lucide-react"
+import api from "../../api/axios"
+import toast from "react-hot-toast"
 
 const LeaveHistory = ({ leaves, isAdmin, onUpdate }) => {
     const [processing, setProcessing] = useState(null)
 
     const handleStatusUpdate = async(id, status) => {
         setProcessing(id)
+        try {
+            await api.patch(`/leave/${id}`, { status })
+            toast.success(`Leave ${status.toLowerCase()}`)
+            onUpdate?.()
+        } catch (error) {
+            toast.error(error.response?.data?.error || "Failed to update leave")
+        } finally {
+            setProcessing(null)
+        }
     }
 
     return (

@@ -1,21 +1,36 @@
 import { useEffect, useState } from "react"
-import { useParams } from "react-router-dom"
-import { dummyPayslipData } from "../assets/assets"
+import { Navigate, useParams } from "react-router-dom"
 import Loading from "../components/Loading"
 import {format} from "date-fns"
+import { useAuth } from "../context/AuthContext"
+import api from "../api/axios"
+import toast from "react-hot-toast"
 
 const PrintPayslip = () => {
     const {id} = useParams()
+    const { user, loading: authLoading } = useAuth()
     const[payslip, setPayslip] = useState(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        setPayslip(dummyPayslipData.find((slip)=>slip._id === id))
-        setTimeout(()=>{
-            setLoading(false)
-        },1000)
-    }, [id])
+        if (!user) return
+        let cancelled = false
+        ;(async () => {
+            try {
+                const { data } = await api.get(`/payslips/${id}`)
+                if (!cancelled) setPayslip(data)
+            } catch (error) {
+                toast.error(error.response?.data?.error || "Failed to load payslip")
+                if (!cancelled) setPayslip(null)
+            } finally {
+                if (!cancelled) setLoading(false)
+            }
+        })()
+        return () => { cancelled = true }
+    }, [id, user])
 
+    if (authLoading) return <Loading />
+    if (!user) return <Navigate to="/login" replace />
     if(loading) return <Loading />
     if(!payslip) return <p className="text-center py-12 text-slate-400">Payslip not found</p>
 

@@ -1,28 +1,39 @@
 import { useCallback, useEffect, useState } from "react"
-import { dummyEmployeeData, dummyPayslipData } from "../assets/assets"
 import Loading from "../components/Loading"
 import PayslipList from "../components/Payslip/PayslipList"
 import GeneratePayslipForm from "../components/Payslip/GeneratePayslipForm"
+import api from "../api/axios"
+import { useAuth } from "../context/AuthContext"
+import toast from "react-hot-toast"
 
 const Payslips = () => {
     const [payslips, setPayslips] = useState([])
     const [employees, setEmployees] = useState([])
     const [loading, setLoading] = useState(true)
-    const isAdmin = true
+    const { user } = useAuth()
+    const isAdmin = user?.role === "ADMIN"
 
     const fetchPayslips = useCallback(async () => {
-        setPayslips(dummyPayslipData)
-        setTimeout(() => {
+        try {
+            const { data } = await api.get("/payslips")
+            setPayslips(data.data || [])
+        } catch (error) {
+            toast.error(error.response?.data?.error || "Failed to load payslips")
+            setPayslips([])
+        } finally {
             setLoading(false)
-        }, 1000)
+        }
     }, [])
 
     useEffect(() => {
         fetchPayslips()
     }, [fetchPayslips])
 
-    useEffect(() =>{
-        if(isAdmin) setEmployees(dummyEmployeeData)
+    useEffect(() => {
+        if (!isAdmin) return
+        api.get("/employees")
+            .then(({ data }) => setEmployees(data || []))
+            .catch(() => setEmployees([]))
     }, [isAdmin])
 
     if(loading) return <Loading />

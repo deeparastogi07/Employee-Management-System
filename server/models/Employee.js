@@ -53,8 +53,8 @@ const employeeSchema = new mongoose.Schema({
         type: Boolean,
         required: false
     },
-    Bio: {
-        type: Date,
+    bio: {
+        type: String,
         default: ""
     },
     department: {

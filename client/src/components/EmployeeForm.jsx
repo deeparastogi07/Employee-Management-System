@@ -2,6 +2,8 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { DEPARTMENTS } from "../assets/assets"
 import { Loader2Icon } from "lucide-react"
+import api from "../api/axios"
+import toast from "react-hot-toast"
 
 const EmployeeForm = ({initialData, onSuccess, onCancel}) => {
     const navigate = useNavigate()
@@ -9,6 +11,25 @@ const EmployeeForm = ({initialData, onSuccess, onCancel}) => {
     const isEditMode = !!initialData
     const handleSubmit = async (e) => {
         e.preventDefault()
+        setLoading(true)
+        try {
+            const form = new FormData(e.target)
+            const payload = Object.fromEntries(form.entries())
+            if (isEditMode && !payload.password) delete payload.password
+            const id = initialData?.id || initialData?._id
+            if (isEditMode) {
+                await api.put(`/employees/${id}`, payload)
+                toast.success("Employee updated")
+            } else {
+                await api.post("/employees", payload)
+                toast.success("Employee created")
+            }
+            onSuccess?.()
+        } catch (error) {
+            toast.error(error.response?.data?.error || "Failed to save employee")
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
@@ -91,7 +112,7 @@ const EmployeeForm = ({initialData, onSuccess, onCancel}) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm text-slate-700">
                 <div className="sm:col-span-2">
                     <label className="block mb-2">Work Email</label>
-                    <input type="email" name="email" required/>
+                    <input type="email" name="email" required defaultValue={initialData?.email || initialData?.user?.email || ""}/>
                 </div>
                 {!isEditMode && (
                     <div>

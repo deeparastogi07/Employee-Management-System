@@ -1,15 +1,20 @@
 import React, { useEffect, useState } from "react"
-import { href, useLocation, Link} from 'react-router-dom'
-import { dummyProfileData } from '../assets/assets'
-import { MenuIcon, UserIcon, XIcon, LayoutGridIcon, CalendarIcon, FileTextIcon, DollarSignIcon, SettingsIcon, ChevronRightIcon, LogOutIcon } from "lucide-react"
+import { useLocation, Link } from 'react-router-dom'
+import { MenuIcon, UserIcon, XIcon, LayoutGridIcon, CalendarIcon, FileTextIcon, DollarSignIcon, SettingsIcon, ChevronRightIcon, LogOutIcon, Loader2 } from "lucide-react"
+import { useAuth } from "../context/AuthContext"
+import api from "../api/axios"
 
 const Sidebar = () => {
-    const {pathname} = useLocation()
+    const { pathname } = useLocation()
     const [userName, setUserName] = useState("")
     const [mobileOpen, setMobileOpen] = useState(false)
 
+    const { user, loading, logout } = useAuth()
+
     useEffect(() => {
-        setUserName(dummyProfileData.firstName + " " + dummyProfileData.lastName)
+        api.get("/profile").then(({ data }) => {
+            if (data.firstName) setUserName(`${data.firstName} ${data.lastName || ""}`.trim())
+        })
     }, [])
 
     // close mobile sidebar on route change
@@ -17,18 +22,19 @@ const Sidebar = () => {
         setMobileOpen(false)
     }, [pathname])
 
-    const role = "" || "EMPLOYEE"
+    const role = user?.role;
     const navItems = [
-        {name: "Dashboard", href: "/dashboard", icon: LayoutGridIcon},
-        role == "ADMIN" ?  
-        {name: "Employees", href: "/employees", icon: UserIcon} : 
-        {name: "Attendance", href: "/attendance", icon: CalendarIcon},
-        {name: "Leave", href: "/leave", icon: FileTextIcon},
-        {name: "Payslips", href: "/payslips", icon: DollarSignIcon},
-        {name: "Settings", href: "/settings", icon: SettingsIcon}
+        { name: "Dashboard", href: "/dashboard", icon: LayoutGridIcon },
+        role == "ADMIN" ?
+            { name: "Employees", href: "/employees", icon: UserIcon } :
+            { name: "Attendance", href: "/attendance", icon: CalendarIcon },
+        { name: "Leave", href: "/leave", icon: FileTextIcon },
+        { name: "Payslips", href: "/payslips", icon: DollarSignIcon },
+        { name: "Settings", href: "/settings", icon: SettingsIcon }
     ]
 
     const handleLogout = () => {
+        logout()
         window.location.href = "/login"
     }
 
@@ -38,7 +44,7 @@ const Sidebar = () => {
             <div className="px-5 pt-6 pb-5 border-b border-white/6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <UserIcon className="text-white size-7"/>
+                        <UserIcon className="text-white size-7" />
                         <div>
                             <p className="font-semibold text-[13px] text-white tracking-wide">Employee MS</p>
                             <p className="text-[11px] text-slate-500 font-medium">Management System</p>
@@ -66,7 +72,7 @@ const Sidebar = () => {
                     </div>
                 </div>
             )}
-            
+
             {/* Section Label */}
             <div className="px-5 pt-5 pb-2">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">Navigation</p>
@@ -74,23 +80,30 @@ const Sidebar = () => {
 
             {/* Navigation List */}
             <div className="flex-1 px-3 space-y-0.5 overflow-y-auto">
-                {navItems.map((item) => {
-                    const isActive = pathname.startsWith(item.href)
-                    return (
-                        <Link key={item.name} to={item.href} className={`group flex itmes-center gap-3 px-3 py-2.5 rounded-md text-[13px] font-medium transition-all duration-150 relative ${isActive ? "bg-indigo-500/12 text-indigo-300" : "text-slate-300 hover:text-white hover:bg-white/4"}`}>
-                            {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-indigo-500"/>}
-                            <item.icon className={`w-[17px] h-[17px] shrink-0 ${isActive ? "text-indigo-300" : "text-slate-400 group-hover:text-slate-300"}`}/>
-                            <span className="flex-1">{item.name}</span>
-                            {isActive && <ChevronRightIcon className="w-3.5 h-3.5 text-indigo-500/50"/>}
-                        </Link>
-                    )
-                })}
+                {loading ? (
+                    <div className="px-3 py-3 flex items-center gap-2 text-slate-500">
+                        <Loader2 className="animate-spin w-4 h-4" />
+                        <span className="text-sm">Loading...</span>
+                    </div>
+                ) : (
+                    navItems.map((item) => {
+                        const isActive = pathname.startsWith(item.href)
+                        return (
+                            <Link key={item.name} to={item.href} className={`group flex itmes-center gap-3 px-3 py-2.5 rounded-md text-[13px] font-medium transition-all duration-150 relative ${isActive ? "bg-indigo-500/12 text-indigo-300" : "text-slate-300 hover:text-white hover:bg-white/4"}`}>
+                                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-indigo-500" />}
+                                <item.icon className={`w-[17px] h-[17px] shrink-0 ${isActive ? "text-indigo-300" : "text-slate-400 group-hover:text-slate-300"}`} />
+                                <span className="flex-1">{item.name}</span>
+                                {isActive && <ChevronRightIcon className="w-3.5 h-3.5 text-indigo-500/50" />}
+                            </Link>
+                        )
+                    })
+                )}
             </div>
 
             {/* Logout */}
             <div className="p-3 border-t border-white/6">
                 <button onClick={handleLogout} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-[13px] font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/8 transition-all duration-150">
-                    <LogOutIcon className="w-[17px] h-[17px]"/>
+                    <LogOutIcon className="w-[17px] h-[17px]" />
                     <span>Log out</span>
                 </button>
             </div>
@@ -99,13 +112,13 @@ const Sidebar = () => {
 
     return (
         <>
-            {/* Mobile hamurger button */}
+            {/* Mobile hamburger button */}
             <button onClick={() => setMobileOpen(true)} className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-slate-900 text-white rounded-lg shadow-lg border border-white/10">
-                <MenuIcon size={20}/>
+                <MenuIcon size={20} />
             </button>
 
             {/* Mobile overlay */}
-            {mobileOpen && <div className="lg:hidden fixed inset-0 b-black/60 backdrop-blur-sm z-40" onClick={() => setMobileOpen(false)}/>}
+            {mobileOpen && <div className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={() => setMobileOpen(false)} />}
 
             {/* Sidebar - desktop */}
             <aside className="hidden lg:flex flex-col h-full w-65 bg-linear-to-b from-slate-900 via-slate-900 to-slate-950 text-white shrink-0 border-r border-white/4">

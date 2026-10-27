@@ -33,13 +33,17 @@ export const clockInOut = async (req, res) => {
                 status: isLate ? "LATE" : "PRESENT",
             })
 
-            await inngest.send({
-                name: "employee/check-out",
-                data: {
-                    employeeId: employee._id,
-                    attendanceId: attendace._id,
-                }
-            })
+            try {
+                await inngest.send({
+                    name: "employee/check-out",
+                    data: {
+                        employeeId: employee._id,
+                        attendanceId: attendance._id,
+                    }
+                })
+            } catch (error) {
+                console.error("Inngest check-out event failed: ", error)
+            }
 
             return res.json({ success: true, type: "CHECK_IN", data: attendance });
         } else if (!existing.checkOut) {
@@ -55,7 +59,7 @@ export const clockInOut = async (req, res) => {
             if (workingHours >= 8) dayType = "Full Day"
             else if (workingHours >= 6) dayType = "Three Quarter Day"
             else if (workingHours >= 4) dayType = "Half Day"
-            else dayType = "short Day"
+            else dayType = "Short Day"
 
             existing.workingHours = workingHours
             existing.dayType = dayType
